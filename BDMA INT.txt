@@ -1,0 +1,44 @@
+pig:
+
+data = load '/in126/stu.txt' as (line:chararray);
+wordsinline = foreach data generate flatten(TOKENIZE(line,' ')) as word;
+grouped = group wordsinline by word;
+count = foreach grouped generate group,COUNT(wordsinline);
+
+____________________________________________________________________________
+csvfile:
+
+stu = load '/in126/stu.csv' USING PigStorage(',') as (id:chararray,name:chararray,dept:chararray);
+def = foreach stu generate id,name,dept;
+order1 = order stu by name desc;
+filter = filter stu by dept == 'cs';
+split stu into ds if dept == 'ds' ,cs if dept == 'cs'; 
+stujoin = UNION ds,cs;
+
+______________________________________________________________________________
+
+HIVE:
+
+show databases;
+create database supermarket;
+use supermarket;
+show tables;
+
+create table sales(id int,name string,amount float)row format delimited fields terminated by ',' tblproperties("skip.header.line.count"="1");
+load data local inpath 'home/cloudera/supermarket.csv' into table sales;
+
+create view temp25 as select * from weather where temp<25;
+
+_______________________________________________________________________________
+pyspark:
+
+pip install findspark
+import findspark
+findspark.init()
+from pyspark.sql import SparkSession
+spark=Sparksession.builder.master("local").appname("wordcount").getOrCreate()
+sc=spark.sparkContext
+in_text=sc.textFile("dbfs:/FileStore/shared_uploads/ds215229113@bhc.edu.in/data_1_-2.txt")
+in_text.collect()
+text_flat=in_text.flatMap(lambda x:x.split(" ")) . map(lambda word: (word,1)). reduceByKey(lambda x, y: x+y)
+text_flat.collect()
